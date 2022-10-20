@@ -1,0 +1,1 @@
+terraform output -raw private_key > ansible.pem

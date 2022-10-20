@@ -19,11 +19,11 @@ output "vpc_id" {
 }
 
 output "subnet_id1" {
-  value       = module.vpc.private_subnets[0]
-  description = "First subnet id"
+  value       = module.vpc.public_subnets[0]
+  description = "Public subnet id"
 }
 
 output "subnet_id2" {
   value       = module.vpc.private_subnets[1]
-  description = "Second subnet id"
+  description = "Public subnet id 2"
 }
