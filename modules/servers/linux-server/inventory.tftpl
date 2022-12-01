@@ -1,0 +1,8 @@
+[webservers]
+testserver ansible_host=${test_ip}
+
+[webservers:vars]
+ansible_user=Administrator
+ansible_password=${test_password}
+ansible_connection=winrm
+ansible_winrm_server_cert_validation=ignore

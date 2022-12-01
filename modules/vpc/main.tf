@@ -18,6 +18,10 @@ module "vpc" {
   }
 }
 
+data "http" "myip" {
+  url = "http://ipv4.icanhazip.com"
+}
+
 resource "aws_security_group" "ec2-sg" {
   name        = "${var.environment}-${var.app-name}-ec2-sg"
   description = "${var.environment} EC2 Security Group for ${var.app-name}"
@@ -37,6 +41,20 @@ resource "aws_security_group" "ec2-sg" {
     description = "Http"
     cidr_blocks = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
+  }
+  ingress {
+    from_port = 3389
+    to_port = 3389
+    protocol = "tcp"
+    description = "local rdp"
+    cidr_blocks = ["${chomp(data.http.myip.body)}/32"]
+  }
+  ingress {
+    from_port = 5986
+    to_port = 5986
+    protocol = "tcp"
+    description = "Winrm"
+    self = true
   }
   egress {
     from_port   = 0
