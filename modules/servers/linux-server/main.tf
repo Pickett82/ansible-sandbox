@@ -14,6 +14,7 @@ resource "aws_instance" "test_server" {
       sudo yum update -y
       pip3.8 install ansible
       pip3.8 install pywinrm
+      pip3.8 install jmespath
       #pip3 install ansible
       #pip3 install pywinrm
       EOF
@@ -23,7 +24,7 @@ resource "aws_instance" "test_server" {
     }
 
     provisioner "file" {
-      source      = "${path.module}/../../../ansible/ansible.cfg"
+      source      = "${path.module}/ansible/ansible.cfg"
       destination = "/home/ec2-user/ansible.cfg"
 
       connection {
@@ -35,7 +36,7 @@ resource "aws_instance" "test_server" {
     }
 
     provisioner "file" {
-      content     = templatefile("${path.module}/inventory.tftpl", { test_ip = var.windows_private_ip, test_password = var.windows_password })
+      content     = templatefile("${path.module}/ansible/inventory.tftpl", { test_ip = var.windows_private_ip, test_password = var.windows_password })
       destination = "/home/ec2-user/inventory.ini"
 
       connection {

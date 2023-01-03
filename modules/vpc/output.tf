@@ -18,12 +18,17 @@ output "vpc_id" {
   description = "The id of the VPC"
 }
 
-output "subnet_id1" {
-  value       = module.vpc.public_subnets[0]
-  description = "Public subnet id"
-}
+# output "subnet_id1" {
+#   value       = module.vpc.public_subnets[0]
+#   description = "Public subnet id"
+# }
 
-output "subnet_id2" {
-  value       = module.vpc.private_subnets[1]
-  description = "Public subnet id 2"
+# output "subnet_id2" {
+#   value       = module.vpc.private_subnets[1]
+#   description = "Public subnet id 2"
+# }
+
+output "route_table" {
+  value = module.vpc.default_route_table_id
+  description = "the defualt route table id"
 }

@@ -1,0 +1,36 @@
+---
+  - name: Ansible windows setup script
+    hosts: webservers # host group to run the module on
+    tasks:
+    - name: Change the hostname to custom-hostname
+      ansible.windows.win_hostname:
+        name: custom-hostname
+      register: res
+
+    - name: Reboot
+      ansible.windows.win_reboot:
+      when: res.reboot_required
+
+    - name: Get disk facts
+      win_disk_facts:
+
+    - name: Are the drives Raw Device Mappings?
+      debug:
+        var: ansible_facts.disks[0].friendly_name
+    
+    - name: Run basic PowerShell script
+      ansible.windows.win_powershell:
+        script: |
+          get-WmiObject -class Win32_Share
+      register: st
+      
+    - name: asas
+      debug:
+        msg: "{{ item.Path }}:{{ item.Name }}"
+      loop: "{{ st.output }}"
+
+    - name: awewe
+      debug:
+        msg: "{{ st.output|
+                 json_query('[].[Path, Name]')|
+                 map('join', ':') }}"

@@ -7,3 +7,8 @@ variable "app-name" {
   description = "Name of application"
   type = string
 }
+
+variable "ip4-cidr-block" {
+  description = "IPv4 CIDR block"
+  type = string
+}
