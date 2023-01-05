@@ -82,10 +82,6 @@ resource "aws_vpc_peering_connection" "peering-connection" {
   auto_accept = true
 }
 
-# data "aws_route_table" "test" {
-#     vpc_id = module.ansible-sandbox-ds-vpc.vpc_id
-# }
-
 resource "aws_route" "ds-vpc-route1-info" {
     route_table_id = module.ansible-sandbox-ds-vpc.route_table
     destination_cidr_block = "0.0.0.0/0"
@@ -119,6 +115,13 @@ resource "aws_security_group" "vpc-ds-sg" {
       to_port         = 3389
       protocol        = "tcp"
       description     = "Remote desktop"
+      cidr_blocks = ["${chomp(data.http.myip.body)}/32"]
+    }
+    ingress {
+      from_port       = 22
+      to_port         = 22
+      protocol        = "tcp"
+      description     = "ssh"
       cidr_blocks = ["${chomp(data.http.myip.body)}/32"]
     }
     ingress {
@@ -335,7 +338,27 @@ resource "aws_instance" "windows-test-server" {
     associate_public_ip_address = true
     key_name = aws_key_pair._.key_name
     get_password_data = true
+    depends_on = [resource.aws_directory_service_directory.as-directory]
+    iam_instance_profile = aws_iam_instance_profile.domain_join_profile.name
+    user_data = <<EOF
+      <powershell>
+      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+      $url = "https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1"
+      $file = "$env:temp\ConfigureRemotingForAnsible.ps1"
+      (New-Object -TypeName System.Net.WebClient).DownloadFile($url, $file)
+      powershell.exe -ExecutionPolicy ByPass -File $file
+      Install-WindowsFeature -Name GPMC,RSAT-AD-PowerShell,RSAT-AD-AdminCenter,RSAT-ADDS-Tools,RSAT-DNS-Server
+      </powershell>
+      EOF
     
+}
+
+resource "null_resource" "create_rdps" {
+  provisioner "local-exec" {
+    command = "./create_rdp.ps1"
+    interpreter = ["PowerShell"]
+    working_dir = "."
+  }
 }
 
 resource "aws_ssm_document" "ssm_document" {
@@ -360,5 +383,59 @@ DOC
 
 resource "aws_ssm_association" "associate_ssm" {
   name        = aws_ssm_document.ssm_document.name
-  instance_id = aws_instance.windows-test-server.id
+  
+  targets {
+    key    = "InstanceIds"
+    values = [aws_instance.windows-test-server.id]
+  }
+}
+
+resource "aws_instance" "test_server" {
+    
+    ami           = "ami-06672d07f62285d1d" 
+    instance_type = "t2.micro"
+    key_name      = aws_key_pair._.key_name
+
+    subnet_id = resource.aws_subnet.ds-vpc-subnet01.id
+    vpc_security_group_ids = [resource.aws_security_group.vpc-ds-sg.id]
+    associate_public_ip_address = true
+
+    user_data = <<-EOF
+      #!/bin/bash
+      sudo amazon-linux-extras install python3.8 -y
+      sudo yum update -y
+      pip3.8 install ansible
+      pip3.8 install pywinrm
+      pip3.8 install jmespath
+      echo "ansible testserver -i inventory.ini -m win_ping" > ping.sh
+      chmod +x ping.sh
+      EOF
+
+    tags = {
+      "Name" = "DevOps Control Server"
+    }
+
+    provisioner "file" {
+      source      = "../modules/servers/linux-server/ansible/ansible.cfg" 
+      destination = "/home/ec2-user/ansible.cfg"
+
+      connection {
+        type        = "ssh"
+        user        = "ec2-user"
+        private_key = tls_private_key._.private_key_pem
+        host        = self.public_ip
+      }
+    }
+
+    provisioner "file" {
+      content     = templatefile("../modules/servers/linux-server/ansible/inventory.tftpl", { test_ip = aws_instance.windows-test-server.private_ip, test_password = rsadecrypt(aws_instance.windows-test-server.password_data,tls_private_key._.private_key_pem) })
+      destination = "/home/ec2-user/inventory.ini"
+
+      connection {
+        type        = "ssh"
+        user        = "ec2-user"
+        private_key = tls_private_key._.private_key_pem
+        host        = self.public_ip
+      }
+    }
 }
