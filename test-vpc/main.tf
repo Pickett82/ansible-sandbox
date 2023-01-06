@@ -331,7 +331,7 @@ resource "aws_key_pair" "_" {
 }
 
 resource "aws_instance" "windows-test-server" {
-    ami = "ami-0e322684a5a0074ce"
+    ami = "ami-0e322684a5a0074ce" #ami-02b64dfd7dcb71f75
     instance_type = "t2.micro"
     subnet_id = resource.aws_subnet.ds-vpc-subnet01.id
     vpc_security_group_ids = [resource.aws_security_group.vpc-ds-sg.id]
@@ -407,6 +407,8 @@ resource "aws_instance" "test_server" {
       pip3.8 install ansible
       pip3.8 install pywinrm
       pip3.8 install jmespath
+      sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
+      sudo yum -y install terraform
       echo "ansible testserver -i inventory.ini -m win_ping" > /home/ec2-user/ping.sh
       chmod +x /home/ec2-user/ping.sh
       EOF
@@ -416,8 +418,8 @@ resource "aws_instance" "test_server" {
     }
 
     provisioner "file" {
-      source      = "../modules/servers/linux-server/ansible/ansible.cfg" 
-      destination = "/home/ec2-user/ansible.cfg"
+      source      = "../modules/servers/linux-server/ansible" 
+      destination = "/home/ec2-user/"
 
       connection {
         type        = "ssh"
@@ -428,7 +430,7 @@ resource "aws_instance" "test_server" {
     }
 
     provisioner "file" {
-      content     = templatefile("../modules/servers/linux-server/ansible/inventory.tftpl", { test_ip = aws_instance.windows-test-server.private_ip, test_password = rsadecrypt(aws_instance.windows-test-server.password_data,tls_private_key._.private_key_pem) })
+      content     = templatefile("../modules/servers/linux-server/templates/inventory.tftpl", { test_ip = aws_instance.windows-test-server.private_ip, test_password = rsadecrypt(aws_instance.windows-test-server.password_data,tls_private_key._.private_key_pem) })
       destination = "/home/ec2-user/inventory.ini"
 
       connection {
