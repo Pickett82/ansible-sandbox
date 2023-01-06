@@ -21,7 +21,7 @@ if (Test-Path $FileName) {
 $EncryptedPassword = ("SuperSecretPassw0rd" | ConvertTo-SecureString -AsPlainText -Force) | ConvertFrom-SecureString;
 Add-Content -Path $FileName -Value "auto connect:i:1"
 Add-Content -Path $FileName -Value "full address:s:$PublicIp"
-Add-Content -Path $FileName -Value "username:s:corp\admin"
+Add-Content -Path $FileName -Value "username:s:ccc\admin"
 Add-Content -Path $FileName -Value "password 51:b:$EncryptedPassword"
 Add-Content -Path $FileName -Value "screen mode id:i:1"
 Add-Content -Path $FileName -Value "use multimon:i:0"

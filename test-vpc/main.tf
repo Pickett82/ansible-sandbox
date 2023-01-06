@@ -268,8 +268,8 @@ resource "aws_security_group" "vpc-onprem-sg" {
 
 resource "aws_directory_service_directory" "as-directory" {
   edition  = "Standard"
-  name = "corp.example.com"
-  short_name = "corp"
+  name = "ccc.cambridgeshire.gov.uk"
+  short_name = "ccc"
   type     = "MicrosoftAD"
   password = "SuperSecretPassw0rd"
 
@@ -280,7 +280,7 @@ resource "aws_directory_service_directory" "as-directory" {
 }
 
 resource "aws_vpc_dhcp_options" "aws-ds-dhcp" {
-  domain_name = "corp.example.com"
+  domain_name = "ccc.cambridgeshire.gov.uk"
   domain_name_servers = resource.aws_directory_service_directory.as-directory.dns_ip_addresses
 
   tags = {
@@ -362,7 +362,7 @@ resource "null_resource" "create_rdps" {
 }
 
 resource "aws_ssm_document" "ssm_document" {
-  name          = "corp.example.com"
+  name          = "ccc.cambridgeshire.gov.uk"
   document_type = "Command"
   content       = <<DOC
 {
@@ -372,7 +372,7 @@ resource "aws_ssm_document" "ssm_document" {
         "aws:domainJoin": {
             "properties": {
                 "directoryId": "${aws_directory_service_directory.as-directory.id}",
-                "directoryName": "corp.example.com",
+                "directoryName": "ccc.cambridgeshire.gov.uk",
                 "dnsIpAddresses": ${jsonencode(resource.aws_directory_service_directory.as-directory.dns_ip_addresses)}
             }
         }
@@ -407,8 +407,8 @@ resource "aws_instance" "test_server" {
       pip3.8 install ansible
       pip3.8 install pywinrm
       pip3.8 install jmespath
-      echo "ansible testserver -i inventory.ini -m win_ping" > ping.sh
-      chmod +x ping.sh
+      echo "ansible testserver -i inventory.ini -m win_ping" > /home/ec2-user/ping.sh
+      chmod +x /home/ec2-user/ping.sh
       EOF
 
     tags = {
