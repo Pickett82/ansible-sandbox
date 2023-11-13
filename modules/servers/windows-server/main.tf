@@ -1,6 +1,6 @@
 resource "aws_instance" "test_server" {
     
-    ami           = "ami-0cd7837c4f521cd56" //windows 2016
+    ami           = "ami-02a9c04e461574620" //windows 2016
     instance_type = "t2.micro"
     key_name      = aws_key_pair._.key_name
     get_password_data = true

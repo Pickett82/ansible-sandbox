@@ -3,6 +3,7 @@ resource "aws_instance" "test_server" {
     ami           = "ami-06672d07f62285d1d" 
     instance_type = "t2.micro"
     key_name      = aws_key_pair._.key_name
+    associate_public_ip_address = true
 
     vpc_security_group_ids = ["${var.ec2_sg_id}"]
     subnet_id              = "${var.subnet_id1}"
@@ -25,6 +26,7 @@ resource "aws_instance" "test_server" {
     provisioner "file" {
       source      = "${path.module}/../../../ansible/ansible.cfg"
       destination = "/home/ec2-user/ansible.cfg"
+      
 
       connection {
         type        = "ssh"
